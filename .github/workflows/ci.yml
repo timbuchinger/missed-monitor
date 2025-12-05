@@ -20,7 +20,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: api/package-lock.json
       - name: Start docker-compose
-        run: docker-compose up -d
+        run: docker compose up -d
         working-directory: .
       - name: Install dependencies
         run: npm ci
@@ -45,7 +45,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
       - name: Start docker-compose
-        run: docker-compose up -d
+        run: docker compose up -d
         working-directory: .
       - name: Install dependencies
         run: npm ci
