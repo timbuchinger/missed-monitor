@@ -3,10 +3,16 @@ import { test, expect } from '@playwright/test';
 const GROUP = { id: 'group-1', name: 'Operations', userId: 'test-user' };
 
 test('User can create a notification and assign it to a group', async ({ page }) => {
+  const notifications: any[] = [];
+
   await page.route('**/groups', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([GROUP]) });
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([GROUP]),
+      });
     }
     return route.continue();
   });
@@ -14,7 +20,11 @@ test('User can create a notification and assign it to a group', async ({ page })
   await page.route('**/monitors', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
     }
     return route.continue();
   });
@@ -22,18 +32,29 @@ test('User can create a notification and assign it to a group', async ({ page })
   await page.route('**/notifications', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(notifications),
+      });
     }
 
     if (req.method() === 'POST') {
       const body = JSON.parse(req.postData() || '{}');
       const created = {
-        id: 'notif-1',
+        id: body.id ?? `notif-${Date.now()}`,
         name: body.name,
         userId: body.userId,
-        groupIds: body.groupIds || [],
+        groupIds: body.groupIds ?? [],
+        type: body.type ?? 'logger',
+        config: body.config ?? { content: '' },
       };
-      return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(created) });
+      notifications.push(created);
+      return route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(created),
+      });
     }
 
     return route.continue();

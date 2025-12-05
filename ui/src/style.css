@@ -1,2 +1,40 @@
+@config "../tailwind.config.ts";
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+  themes: ["light", "dark", "emerald", "business", "aqua", "nord", "lemonade", "dim"];
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  prefersdark: true;
+}
+
+@plugin "daisyui/theme" {
+  name: "emerald";
+}
+
+@plugin "daisyui/theme" {
+  name: "business";
+}
+
+@plugin "daisyui/theme" {
+  name: "aqua";
+}
+
+@plugin "daisyui/theme" {
+  name: "nord";
+}
+
+@plugin "daisyui/theme" {
+  name: "lemonade";
+}
+
+@plugin "daisyui/theme" {
+  name: "dim";
+}

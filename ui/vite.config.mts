@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [
     vue(),
-    tailwindcss()
+    tailwindcss(),
   ],
   resolve: {
     alias: {
@@ -13,6 +13,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: "127.0.0.1",
     proxy: {
       "/monitors": {
         target: "http://localhost:3000",
@@ -31,5 +32,8 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  preview: {
+    host: "127.0.0.1"
   }
 });

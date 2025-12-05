@@ -3,7 +3,8 @@ import { test, expect } from '@playwright/test';
 const GROUP = { id: 'group-1', name: 'Operations', userId: 'test-user' };
 
 test('User can create a monitor', async ({ page }) => {
-  // Mock backend endpoints
+  const monitors: any[] = [];
+
   await page.route('**/groups', async (route) => {
     const req = route.request();
     if (req.method() === 'GET') {
@@ -22,14 +23,14 @@ test('User can create a monitor', async ({ page }) => {
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([]),
+        body: JSON.stringify(monitors),
       });
     }
 
     if (req.method() === 'POST') {
       const body = JSON.parse(req.postData() || '{}');
       const created = {
-        uuid: body.uuid ?? 'uuid-1',
+        uuid: body.uuid ?? `uuid-${Date.now()}`,
         name: body.name,
         userId: body.userId,
         groupId: body.groupId,
@@ -38,6 +39,7 @@ test('User can create a monitor', async ({ page }) => {
         alarmState: body.alarmState ?? false,
         lastHeartbeat: null,
       };
+      monitors.push(created);
       return route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -70,7 +72,7 @@ test('User can create a monitor', async ({ page }) => {
   await expect(modal).toBeVisible();
 
   // Fill form
-  await modal.getByPlaceholder('API uptime').fill('My Test Monitor');
+  await modal.getByLabel('Name').fill('My Test Monitor');
   await modal.locator('select').selectOption(GROUP.id);
   await modal.locator('input[type="number"]').fill('30');
 

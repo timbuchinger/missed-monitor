@@ -13,24 +13,43 @@ export interface Monitor {
   intervalSeconds: number;
   alarmState: boolean;
   lastHeartbeat: string | null;
+  history: {
+    timestamp: string;
+    status: 'triggered' | 'reset' | 'suppressed';
+  }[];
 }
+
+export type NotificationType = 'logger' | 'discord';
+
+export interface LoggerNotificationConfig {
+  content: string;
+}
+
+export interface DiscordNotificationConfig {
+  webhookUrl: string;
+}
+
+export type NotificationConfig = LoggerNotificationConfig | DiscordNotificationConfig;
 
 export interface Notification {
   id: string;
   name: string;
   userId: string;
   groupIds: string[];
+  type: NotificationType;
+  config: NotificationConfig;
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const { headers, ...rest } = options ?? {};
   const response = await fetch(`${API_BASE}${path}`, {
+    ...rest,
     headers: {
       'Content-Type': 'application/json',
-      ...(options?.headers ?? {}),
+      ...(headers ?? {}),
     },
-    ...options,
   });
 
   if (!response.ok) {
@@ -47,6 +66,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const fetchGroups = () => request<Group[]>('/groups');
 export const fetchMonitors = () => request<Monitor[]>('/monitors');
+export const fetchMonitor = (uuid: string) => request<Monitor>(`/monitors/${uuid}`);
 export const fetchNotifications = () => request<Notification[]>('/notifications');
 
 export const createGroup = (data: Omit<Group, 'id'>) =>
@@ -81,6 +101,11 @@ export const updateMonitor = (uuid: string, data: Omit<Monitor, 'uuid' | 'lastHe
 export const deleteMonitor = (uuid: string) =>
   request<void>(`/monitors/${uuid}`, {
     method: 'DELETE',
+  });
+
+export const acknowledgeMonitor = (uuid: string) =>
+  request<Monitor>(`/ack/${uuid}`, {
+    method: 'GET',
   });
 
 export const createNotification = (data: Omit<Notification, 'id'>) =>
