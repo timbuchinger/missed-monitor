@@ -12,10 +12,14 @@ export interface MonitorRecord {
   intervalSeconds: number;
   alarmState: boolean;
   lastHeartbeat: Date | null;
+  history: {
+    timestamp: Date;
+    status: 'triggered' | 'reset' | 'suppressed';
+  }[];
 }
 
-export type MonitorCreateInput = Omit<MonitorRecord, 'lastHeartbeat'>;
-export type MonitorUpdateInput = Omit<MonitorRecord, 'uuid' | 'lastHeartbeat'>;
+export type MonitorCreateInput = Omit<MonitorRecord, 'lastHeartbeat' | 'history'>;
+export type MonitorUpdateInput = Omit<MonitorRecord, 'uuid' | 'lastHeartbeat' | 'history'>;
 
 export interface MonitorsRepository {
   create(data: MonitorCreateInput): Promise<MonitorRecord>;
@@ -82,6 +86,10 @@ export class MongoMonitorsRepository implements MonitorsRepository {
       intervalSeconds: doc.intervalSeconds,
       alarmState: doc.alarmState ?? false,
       lastHeartbeat: doc.lastHeartbeat ?? null,
+      history: doc.history.map((item) => ({
+        timestamp: item.timestamp,
+        status: item.status,
+      })),
     };
   }
 }

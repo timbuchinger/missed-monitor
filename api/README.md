@@ -35,3 +35,13 @@ npm start
 Health endpoint
 
 - `GET /ready` — returns boolean `true` when the app is up.
+
+### Integrating with Cron Jobs
+
+To turn any cron job into a monitor, simply append the following `curl` command to the end of your cron job command:
+
+```bash
+&& curl http://localhost:3000/ack/YOUR_MONITOR_UUID
+```
+
+Replace `http://localhost:3000` with the actual base URL of your missed-monitor API and `YOUR_MONITOR_UUID` with the UUID of the monitor you want to acknowledge. This command will send an acknowledgment signal to the API, resetting the monitor's alarm state.

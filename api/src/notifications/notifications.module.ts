@@ -8,6 +8,7 @@ import {
   NOTIFICATIONS_REPOSITORY,
   MongoNotificationsRepository,
 } from './notifications.repository';
+import { NotificationRunnerService } from './notification-runner.service';
 
 @Module({
   imports: [
@@ -17,10 +18,12 @@ import {
   controllers: [NotificationsController],
   providers: [
     NotificationsService,
+    NotificationRunnerService,
     {
       provide: NOTIFICATIONS_REPOSITORY,
       useClass: MongoNotificationsRepository,
     },
   ],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

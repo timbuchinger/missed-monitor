@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
 import { GroupsService } from '../groups/groups.service';
 import { CreateMonitorDto } from './dto/create-monitor.dto';
 import { UpdateMonitorDto } from './dto/update-monitor.dto';
@@ -56,6 +57,14 @@ export class MonitorsService {
     if (!monitor) {
       throw new NotFoundException(`Monitor ${uuid} was not found`);
     }
+
+    if (dto.alarmState !== undefined && dto.alarmState !== monitor.alarmState) {
+      monitor.history.push({
+        status: dto.alarmState ? 'triggered' : 'suppressed',
+        timestamp: new Date(),
+      });
+    }
+
     const updated = await this.repository.update(uuid, {
       name: dto.name,
       userId: dto.userId,
@@ -79,7 +88,49 @@ export class MonitorsService {
   }
 
   async acknowledge(uuid: string): Promise<MonitorRecord> {
-    const updated = await this.repository.acknowledge(uuid);
+    const tracer = trace.getTracer('missed-monitor');
+    return await tracer.startActiveSpan('monitors.acknowledge', async (span) => {
+      span.setAttribute('monitor.uuid', uuid);
+      try {
+        const monitor = await this.repository.findByUuid(uuid);
+        if (!monitor) {
+          throw new NotFoundException(`Monitor ${uuid} was not found`);
+        }
+
+        monitor.alarmState = false;
+        monitor.lastHeartbeat = new Date();
+        monitor.history.push({
+          status: 'reset',
+          timestamp: new Date(),
+        });
+
+        const updated = await this.repository.update(uuid, monitor);
+        if (!updated) {
+          throw new NotFoundException(`Monitor ${uuid} was not found`);
+        }
+        return updated;
+      } catch (err) {
+        span.recordException(err as any);
+        throw err;
+      } finally {
+        span.end();
+      }
+    });
+  }
+
+  async suppress(uuid: string): Promise<MonitorRecord> {
+    const monitor = await this.repository.findByUuid(uuid);
+    if (!monitor) {
+      throw new NotFoundException(`Monitor ${uuid} was not found`);
+    }
+
+    monitor.alarmState = false;
+    monitor.history.push({
+      status: 'suppressed',
+      timestamp: new Date(),
+    });
+
+    const updated = await this.repository.update(uuid, monitor);
     if (!updated) {
       throw new NotFoundException(`Monitor ${uuid} was not found`);
     }

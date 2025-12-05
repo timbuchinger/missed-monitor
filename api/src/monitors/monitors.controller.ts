@@ -36,6 +36,11 @@ export class MonitorsController {
     return this.monitorsService.update(uuid, dto);
   }
 
+  @Post(':uuid/suppress')
+  suppress(@Param('uuid') uuid: string) {
+    return this.monitorsService.suppress(uuid);
+  }
+
   @Delete(':uuid')
   @HttpCode(204)
   async remove(@Param('uuid') uuid: string) {

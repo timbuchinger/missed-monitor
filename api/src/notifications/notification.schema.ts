@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Group } from '../groups/group.schema';
+import { NotificationConfig, NotificationType } from './notification-types';
 
 @Schema({
   timestamps: true,
@@ -14,6 +15,12 @@ export class Notification {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: Group.name }], default: [] })
   groupIds!: Types.ObjectId[];
+
+  @Prop({ type: String, required: true, enum: Object.values(NotificationType), default: NotificationType.Logger })
+  type!: NotificationType;
+
+  @Prop({ type: Object, required: true, default: { content: '' } })
+  config!: NotificationConfig;
 }
 
 export type NotificationDocument = Notification & Document;

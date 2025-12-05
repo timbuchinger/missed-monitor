@@ -29,6 +29,17 @@ export class Monitor {
 
   @Prop({ type: Boolean, default: false })
   alarmState!: boolean;
+
+  @Prop({
+    type: [
+      {
+        timestamp: { type: Date, required: true },
+        status: { type: String, enum: ['triggered', 'reset', 'suppressed'], required: true },
+      },
+    ],
+    default: [],
+  })
+  history!: { timestamp: Date; status: 'triggered' | 'reset' | 'suppressed' }[];
 }
 
 export type MonitorDocument = Monitor & Document;

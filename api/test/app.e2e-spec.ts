@@ -21,6 +21,8 @@ import {
   NotificationRecord,
   NotificationsRepository,
 } from '../src/notifications/notifications.repository';
+import { NotificationRunnerService } from '../src/notifications/notification-runner.service';
+import { NotificationType } from '../src/notifications/notification-types';
 
 class InMemoryGroupsRepository implements GroupsRepository {
   private store = new Map<string, GroupRecord>();
@@ -57,7 +59,7 @@ class InMemoryGroupsRepository implements GroupsRepository {
 class InMemoryNotificationsRepository implements NotificationsRepository {
   private store = new Map<string, NotificationRecord>();
 
-  async create(data: { name: string; userId: string; groupIds: string[] }): Promise<NotificationRecord> {
+  async create(data: Omit<NotificationRecord, 'id'>): Promise<NotificationRecord> {
     const id = `notification-${this.store.size + 1}`;
     const notification = { id, ...data };
     this.store.set(id, notification);
@@ -72,9 +74,15 @@ class InMemoryNotificationsRepository implements NotificationsRepository {
     return this.store.get(id) ?? null;
   }
 
+  async findByGroupId(groupId: string): Promise<NotificationRecord[]> {
+    return Array.from(this.store.values()).filter((notification) =>
+      notification.groupIds.includes(groupId),
+    );
+  }
+
   async update(
     id: string,
-    data: { name: string; userId: string; groupIds: string[] },
+    data: Omit<NotificationRecord, 'id'>,
   ): Promise<NotificationRecord | null> {
     if (!this.store.has(id)) {
       return null;
@@ -101,7 +109,7 @@ class InMemoryMonitorsRepository implements MonitorsRepository {
     intervalSeconds: number;
     alarmState: boolean;
   }): Promise<MonitorRecord> {
-    const monitor: MonitorRecord = { ...data, lastHeartbeat: null };
+    const monitor: MonitorRecord = { ...data, lastHeartbeat: null, history: [] };
     this.store.set(data.uuid, monitor);
     return monitor;
   }
@@ -165,6 +173,10 @@ describe('Missed Monitor domain flow', () => {
         { provide: GROUPS_REPOSITORY, useClass: InMemoryGroupsRepository },
         { provide: NOTIFICATIONS_REPOSITORY, useClass: InMemoryNotificationsRepository },
         { provide: MONITORS_REPOSITORY, useClass: InMemoryMonitorsRepository },
+        {
+          provide: NotificationRunnerService,
+          useValue: { run: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -194,6 +206,8 @@ describe('Missed Monitor domain flow', () => {
       name: 'PagerDuty',
       userId: 'user-a',
       groupIds: [group.id],
+      type: NotificationType.Logger,
+      config: { content: 'test content' },
     });
     expect(notification.groupIds).toEqual([group.id]);
 
@@ -201,6 +215,8 @@ describe('Missed Monitor domain flow', () => {
       name: 'PagerDuty (primary)',
       userId: 'user-a',
       groupIds: [group.id],
+      type: NotificationType.Logger,
+      config: { content: 'updated' },
     });
     expect(updatedNotification.name).toContain('primary');
 

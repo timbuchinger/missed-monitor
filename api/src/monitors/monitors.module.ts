@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GroupsModule } from '../groups/groups.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { Monitor, MonitorSchema } from './monitor.schema';
 import { MonitorAckController, MonitorsController } from './monitors.controller';
 import { MonitorsService } from './monitors.service';
@@ -10,6 +11,7 @@ import { MonitorSchedulerService } from './monitor-scheduler.service';
 @Module({
   imports: [
     GroupsModule,
+    NotificationsModule,
     MongooseModule.forFeature([{ name: Monitor.name, schema: MonitorSchema }]),
   ],
   controllers: [MonitorsController, MonitorAckController],

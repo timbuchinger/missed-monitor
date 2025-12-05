@@ -5,18 +5,22 @@ import {
   Notification,
   NotificationDocument,
 } from './notification.schema';
+import { NotificationConfig, NotificationType } from './notification-types';
 
 export interface NotificationRecord {
   id: string;
   name: string;
   userId: string;
   groupIds: string[];
+  type: NotificationType;
+  config: NotificationConfig;
 }
 
 export interface NotificationsRepository {
   create(data: Omit<NotificationRecord, 'id'>): Promise<NotificationRecord>;
   findAll(): Promise<NotificationRecord[]>;
   findById(id: string): Promise<NotificationRecord | null>;
+  findByGroupId(groupId: string): Promise<NotificationRecord[]>;
   update(
     id: string,
     data: Omit<NotificationRecord, 'id'>,
@@ -51,6 +55,13 @@ export class MongoNotificationsRepository implements NotificationsRepository {
     return doc ? this.toRecord(doc) : null;
   }
 
+  async findByGroupId(groupId: string): Promise<NotificationRecord[]> {
+    const docs = await this.model
+      .find({ groupIds: new Types.ObjectId(groupId) })
+      .exec();
+    return docs.map((doc) => this.toRecord(doc));
+  }
+
   async update(
     id: string,
     data: Omit<NotificationRecord, 'id'>,
@@ -75,6 +86,8 @@ export class MongoNotificationsRepository implements NotificationsRepository {
       name: doc.name,
       userId: doc.userId,
       groupIds: (doc.groupIds ?? []).map((gid) => gid.toString()),
+      type: (doc.type as NotificationType) ?? NotificationType.Logger,
+      config: (doc.config as NotificationConfig) ?? { content: '' },
     };
   }
 }
