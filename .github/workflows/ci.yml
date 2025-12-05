@@ -52,6 +52,6 @@ jobs:
       - name: Build
         run: npm run build
       - name: Test
-        run: npm run test
+        run: npm run test:coverage
       - name: Build Docker image
         run: docker build . -t missed-monitor-ui:latest
